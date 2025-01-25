@@ -63,6 +63,13 @@ const register = async (req, res) => {
                 message: registered
             });
         }
+        else if (otpStore[email] !== req.body.otp){
+
+            res.status(201).json({
+                success: true,
+                message: "invalid otp"
+            });
+        }
     }
     catch (error) {
         console.log(error);
@@ -78,7 +85,7 @@ const login = async (req, res) => {
             if (ifExists.password == password) {
 
                 const token = jwt.sign(
-                    { id:ifExists._id, name:ifExists.name, email:ifExists.email },
+                    { id:ifExists._id, userId: ifExists.userId, email:ifExists.email },
                     'jwt-secret-2k24',
                     { expiresIn: '30d'}
                 );
@@ -116,4 +123,56 @@ const verifyToken=async(req,res)=>{
     });
 }
 
-module.exports = { register, login, verifyUser, verifyToken}
+const fetchUser = async (req, res) => {
+    try {
+        const fetchUserData = await userData.findOne(
+            {
+                _id: req.user.id,
+                userId: req.user.userId
+            },
+        );
+        
+        res.status(201).json({
+            success: true,
+            data: "user profile",
+            message: fetchUserData,
+        });
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+const updateUser = async (req, res) => {
+    try {
+        const personDetail = await userData.updateOne(
+            {
+                _id:req.user.id,
+                userId:req.user.userId
+            },
+            {    
+                $set:
+                {
+                    personalDetails:
+                    { 
+                        name:req.body.name,
+                        gender:req.body.gender,
+                        about:req.body.about,
+                        profilePic:req.body.profilePic,
+                        homeTown:req.body.homeTown,
+                    }
+                }
+            }
+        );
+        res.status(201).json({
+            success: true,
+            data: "updated user profile",
+            message: personDetail,
+        });
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+module.exports = { register, login, verifyUser, verifyToken, fetchUser, updateUser}
