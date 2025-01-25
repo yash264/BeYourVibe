@@ -1,28 +1,66 @@
 const mongoose = require("mongoose");
-const personData = require("../models/UserData");
+const userData = require("../models/userData");
 const jwt = require("jsonwebtoken");
-//const { registrationMail } = require("../middleware/registrationMail"); 
+const otpGenerator = require("otp-generator");
+const { verifyEmail } = require("../middleware/verifyEmail"); 
+
+const otpStore = {};
+
+const verifyUser = async (req, res) => {
+    try {
+        const ifExists = await userData.findOne({ userId: req.body.userId });
+        if (ifExists) {
+            res.status(201).json("UserId must be Unique");
+        }
+        else {
+            const otp = otpGenerator.generate(6, 
+                { 
+                    lowerCaseAlphabets: false,
+                    upperCaseAlphabets: false,
+                    specialChars: false 
+                }
+            );
+
+            //  to send the mail
+            verifyEmail(req.body.userId, req.body.email, otp);
+
+            otpStore[req.body.email] = otp;
+
+            res.status(201).json({
+                success: true,
+                message: "otp send"
+            });
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
 
 const register = async (req, res) => {
     try {
-        const ifExists = await personData.findOne({ email: req.body.email });
+        const ifExists = await userData.findOne({ email: req.body.email });
         if (ifExists) {
             res.status(201).json("Email Already Exists");
         }
-        else {
-            const registerPerson = new personData({
-                name: req.body.name,
+        else if (otpStore[email] === req.body.otp){
+
+            const registerPerson = new userData({
+                userId: req.body.userId,
                 email: req.body.email,
                 password: req.body.password
             })
             const registered = await registerPerson.save();
+
+            delete otpStore[email];
 
             // to send the mail
             //registrationMail(req.body.name, req.body.email);
 
             res.status(201).json({
                 success: true,
-                message: "registered"
+                message: registered
             });
         }
     }
@@ -34,7 +72,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const ifExists = await personData.findOne({ email: email })
+        const ifExists = await userData.findOne({ email: email })
 
         if (ifExists) {
             if (ifExists.password == password) {
@@ -78,4 +116,4 @@ const verifyToken=async(req,res)=>{
     });
 }
 
-module.exports = { register, login, verifyToken}
+module.exports = { register, login, verifyUser, verifyToken}

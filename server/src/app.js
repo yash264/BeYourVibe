@@ -5,7 +5,7 @@ const port = 4000;
 const cors = require("cors");
 require("./db/connection");
 
-const UserRoute = require("./route/UserRoute");
+const UserRoute = require("./route/user.route");
 
 const corsOptions ={
     origin: "http://localhost:3000",
