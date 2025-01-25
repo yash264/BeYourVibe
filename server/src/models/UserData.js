@@ -7,6 +7,24 @@ const userSchema = new mongoose.Schema({
     email:{
         type:String
     },
+    personDetails:{
+        type:Array
+    },
+    name:{
+        type:String
+    },
+    gender:{
+        type:String
+    },
+    about:{
+        type:String
+    },
+    proficePic:{
+        type:String
+    },
+    homeTown:{
+        type:String
+    },
     password:{
         type:String
     },
