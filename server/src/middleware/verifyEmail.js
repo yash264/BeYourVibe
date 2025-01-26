@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const verifyEmail = async(userId, email, otp) => {
+const verifyEmail = async(email, name, otp) => {
     try{
         const transport = nodemailer.createTransport({
             service: "gmail",
@@ -27,7 +27,7 @@ const verifyEmail = async(userId, email, otp) => {
                             <div>
                                 <img src="https://t4.ftcdn.net/jpg/05/94/39/47/360_F_594394711_JcBD8PvFX2Tewf62YtuCHj57fcPxN7AZ.jpg" width="100px"/>
                             </div>
-                            <h4> Dear ${userId} ,</h4>
+                            <h4> Dear ${name} ,</h4>
                             <br>
                             <p>Your OTP for registration is ${otp}</p>
                             <br>
@@ -35,7 +35,7 @@ const verifyEmail = async(userId, email, otp) => {
                             <p>Best regards,</p>
                             <br>
                         <div>
-                            <p>&copy; 2024 Designed, Developed and Hosted by National Informatics Center.</p>
+                            <p>&copy; 2024 Designed, Developed and Hosted by Be Your Vibe.</p>
                         </div>
                     </html>
                 `,

@@ -1,35 +1,36 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-    userId:{
-        type:String
+    name: {
+        type: String
     },
-    email:{
-        type:String
+    email: {
+        type: String
     },
-    personDetails:{
-        type:Array
+    personDetails: {
+        type: Array
     },
-    name:{
-        type:String
+    gender: {
+        type: String
     },
-    gender:{
-        type:String
+    about: {
+        type: String
     },
-    about:{
-        type:String
+    proficePic: {
+        type: String
     },
-    proficePic:{
-        type:String
+    homeTown: {
+        type: String
     },
-    homeTown:{
-        type:String
-    },
-    password:{
-        type:String
+    friends: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "conversationData"
+    }],
+    password: {
+        type: String
     },
 })
 
-const userData = new mongoose.model("user",userSchema);
+const userData = new mongoose.model("user", userSchema);
 
 module.exports = userData; 

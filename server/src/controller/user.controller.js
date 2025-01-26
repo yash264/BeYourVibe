@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const userData = require("../models/userData");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
@@ -8,9 +7,9 @@ const otpStore = {};
 
 const verifyUser = async (req, res) => {
     try {
-        const ifExists = await userData.findOne({ userId: req.body.userId });
+        const ifExists = await userData.findOne({ email: req.body.email });
         if (ifExists) {
-            res.status(201).json("UserId must be Unique");
+            res.status(201).json("Email must be Unique");
         }
         else {
             const otp = otpGenerator.generate(6, 
@@ -22,7 +21,7 @@ const verifyUser = async (req, res) => {
             );
 
             //  to send the mail
-            verifyEmail(req.body.userId, req.body.email, otp);
+            verifyEmail(req.body.email, req.body.name, otp);
 
             otpStore[req.body.email] = otp;
 
@@ -40,16 +39,21 @@ const verifyUser = async (req, res) => {
 
 const register = async (req, res) => {
     try {
-        const ifExists = await userData.findOne({ email: req.body.email });
+        const name = req.body.name;
+        const email = req.body.email;
+        const password = req.body.password;
+        const otp = req.body.verificationCode;
+
+        const ifExists = await userData.findOne({ email: email });
         if (ifExists) {
             res.status(201).json("Email Already Exists");
         }
-        else if (otpStore[email] === req.body.otp){
+        else if (otpStore[email] === otp){
 
             const registerPerson = new userData({
-                userId: req.body.userId,
-                email: req.body.email,
-                password: req.body.password
+                name: name,
+                email: email,
+                password: password
             })
             const registered = await registerPerson.save();
 
@@ -63,10 +67,10 @@ const register = async (req, res) => {
                 message: registered
             });
         }
-        else if (otpStore[email] !== req.body.otp){
+        else if (otpStore[email] !== otp){
 
             res.status(201).json({
-                success: true,
+                success: false,
                 message: "invalid otp"
             });
         }
@@ -85,7 +89,7 @@ const login = async (req, res) => {
             if (ifExists.password == password) {
 
                 const token = jwt.sign(
-                    { id:ifExists._id, userId: ifExists.userId, email:ifExists.email },
+                    { id:ifExists._id, name: ifExists.name, email:ifExists.email },
                     'jwt-secret-2k24',
                     { expiresIn: '30d'}
                 );
@@ -128,7 +132,7 @@ const fetchUser = async (req, res) => {
         const fetchUserData = await userData.findOne(
             {
                 _id: req.user.id,
-                userId: req.user.userId
+                email: req.user.email
             },
         );
         
@@ -148,14 +152,13 @@ const updateUser = async (req, res) => {
         const personDetail = await userData.updateOne(
             {
                 _id:req.user.id,
-                userId:req.user.userId
+                email:req.user.email
             },
             {    
                 $set:
                 {
                     personalDetails:
                     { 
-                        name:req.body.name,
                         gender:req.body.gender,
                         about:req.body.about,
                         profilePic:req.body.profilePic,
