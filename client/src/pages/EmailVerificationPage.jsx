@@ -26,7 +26,8 @@ const EmailVerificationPage = () => {
 			const lastFilledIndex = newCode.findLastIndex((digit) => digit !== "");
 			const focusIndex = lastFilledIndex < 5 ? lastFilledIndex + 1 : 5;
 			inputRefs.current[focusIndex].focus();
-		} else {
+		} 
+		else {
 			newCode[index] = value;
 			setCode(newCode);
 
@@ -50,7 +51,8 @@ const EmailVerificationPage = () => {
 			await verifyEmail(verificationCode);
 			navigate("/");
 			toast.success("Email verified successfully");
-		} catch (error) {
+		} 
+		   catch (error) {
 			console.log(error);
 		}
 	};

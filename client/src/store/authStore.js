@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 
-const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/auth" : "/api/auth";
+const API_URL = "http://localhost:5000/api/auth" 
 
 axios.defaults.withCredentials = true;
 
@@ -18,7 +18,8 @@ export const useAuthStore = create((set) => ({
 		try {
 			const response = await axios.post(`${API_URL}/signup`, { email, password, name });
 			set({ user: response.data.user, isAuthenticated: true, isLoading: false });
-		} catch (error) {
+		} 
+		catch (error) {
 			set({ error: error.response.data.message || "Error signing up", isLoading: false });
 			throw error;
 		}
@@ -87,7 +88,8 @@ export const useAuthStore = create((set) => ({
 		try {
 			const response = await axios.post(`${API_URL}/reset-password/${token}`, { password });
 			set({ message: response.data.message, isLoading: false });
-		} catch (error) {
+		} 
+		catch (error) {
 			set({
 				isLoading: false,
 				error: error.response.data.message || "Error resetting password",
