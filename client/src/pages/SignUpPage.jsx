@@ -13,14 +13,23 @@ const SignUpPage = () => {
 	const [password, setPassword] = useState("");
 	const navigate = useNavigate();
 
-	const { signup, error, isLoading } = useAuthStore();
+	const { verifyEmail, error, isLoading } = useAuthStore();
 
 	const handleSignUp = async (e) => {
 		e.preventDefault();
 
 		try {
-			await signup(email, password, name);
-			navigate("/verify-email");
+			await verifyEmail(email, name);
+			navigate("/verifyEmail",
+				{
+					state:
+					{
+						email: email,
+						name: name,
+						password: password
+					}
+				}
+			);
 		} catch (error) {
 			console.log(error);
 		}
@@ -33,7 +42,7 @@ const SignUpPage = () => {
 			className='max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl 
 			overflow-hidden '
 		>
-			
+
 			<div className='p-8'>
 				<h2 className='text-3xl font-bold mb-6 text-center bg-gradient-to-r from-green-400 to-emerald-500 text-transparent bg-clip-text'>
 					Create Account
@@ -43,14 +52,14 @@ const SignUpPage = () => {
 					<Input
 						icon={User}
 						type='text'
-						placeholder='Full Name'
+						placeholder='Enter Your Name'
 						value={name}
 						onChange={(e) => setName(e.target.value)}
 					/>
 					<Input
 						icon={Mail}
 						type='email'
-						placeholder='Email Address'
+						placeholder='Enter Valid Email Id'
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
 					/>

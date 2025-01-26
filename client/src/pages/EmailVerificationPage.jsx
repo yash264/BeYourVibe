@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const EmailVerificationPage = () => {
 	const [code, setCode] = useState(["", "", "", "", "", ""]);
 	const inputRefs = useRef([]);
 	const navigate = useNavigate();
 
-	const { error, isLoading, verifyEmail } = useAuthStore();
+	const location = useLocation();
+    const name = location.state.name;
+    const email = location.state.email;
+	const password = location.state.password;
+
+	const { signUp, error, isLoading } = useAuthStore();
 
 	const handleChange = (index, value) => {
 		const newCode = [...code];
@@ -46,11 +52,26 @@ const EmailVerificationPage = () => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+
 		const verificationCode = code.join("");
+		console.log(name,email,password,verificationCode);
+
 		try {
-			await verifyEmail(verificationCode);
-			navigate("/");
-			toast.success("Email verified successfully");
+
+			const response = await axios.post('http://localhost:4000/api/register', { 
+				name, email, password, verificationCode
+			 });
+            if(response.data.success === true){
+				toast.success("Registered successfully");
+			}
+			else if(response.data.success === false){
+				toast.success("Invalid Otp");
+			}
+			else if(response.data === "Email Already Exists"){
+				toast.success("Email Already Exists");
+			}
+
+			//navigate("/");
 		} 
 		   catch (error) {
 			console.log(error);
