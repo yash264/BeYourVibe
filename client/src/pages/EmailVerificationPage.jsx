@@ -54,7 +54,6 @@ const EmailVerificationPage = () => {
 		e.preventDefault();
 
 		const verificationCode = code.join("");
-		console.log(name,email,password,verificationCode);
 
 		try {
 

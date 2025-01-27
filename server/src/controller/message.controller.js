@@ -2,51 +2,126 @@ const userData = require("../models/userData");
 const conversationData = require("../models/conversationData");
 const messageData = require("../models/messageData");
 const io = require("../socket/server");
+const { text } = require("express");
+
+
+const totalUsers = async (req, res) => {
+    try {
+        const fetchUsers = await userData.find({ });
+
+        res.status(201).json({
+            success: true,
+            data: "users list",
+            message: fetchUsers,
+        });
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
 
 const sendRequest = async (req, res) => {
     try {
-    
+
         const userId = req.user.id;
         const ifExists = await userData.findOne(
             {
                 email: req.body.email,
             }
-        ); 
+        );
 
         const friendExists = await conversationData.findOne(
             {
-                sender: userId,
-                reciever: ifExists._id,
-            }
+                $or:
+                    [
+                        {
+                            sender: userId,
+                            reciever: ifExists._id,
+                        },
+                        {
+                            sender: ifExists._id,
+                            reciever: userId,
+                        }
+                    ]
+            },
         );
 
-        if(friendExists){
-            res.status(201).json("Friend Request Already Send");
+        if (friendExists) {
+            res.status(201).json({
+                success: true,
+                value: "Friend Request Already Send",
+                message: friendExists
+            })
         }
-        else{
+        else {
             const friendRequest = new conversationData({
                 sender: userId,
                 reciever: ifExists._id,
                 status: false
             })
             const conversation = await friendRequest.save();
-            const conversationId = conversation._id;
-    
-            await userData.findByIdAndUpdate(
-                {
-                    _id: userId
-                },
-                {
-                    $push: {
-                        friends: conversationId
-                    }
-                }
-            );
-    
+
             res.status(201).json({
                 success: true,
                 value: "friend request send",
+                message: conversation
             })
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+const totalRequests = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const ifExists = await conversationData.find(
+            {
+                $or:
+                    [
+                        {
+                            sender: userId,
+                        },
+                        {
+                            reciever: userId,
+                        }
+                    ]
+            },
+        );
+
+        if(ifExists){
+            let requests = [];
+            for(let i=0;i<ifExists.length;i++){
+                let senderId ;
+
+                if( ifExists[i].reciever === userId ){
+                    senderId = ifExists[i].sender;
+                }
+                else if( ifExists[i].sender === userId ){
+                    senderId = ifExists[i].reciever;
+                }
+
+                const senderDetails = await userData.find(
+                    {
+                        _id: senderId
+                    }
+                );
+
+                if(senderDetails){
+                    requests.push(senderDetails);
+                }
+            }
+            res.status(201).json({
+                success: true,
+                data: "friend requests list",
+                message: requests,
+            });
+        }
+        else{
+            res.json("no friend requests");
         }
     }
     catch (error) {
@@ -57,34 +132,31 @@ const sendRequest = async (req, res) => {
 const acceptRequest = async (req, res) => {
     try {
 
-        const userId = req.user.id ;
-        const recieverId = await userData.findOne({email: req.body.email});
+        const userId = req.user.id;
 
         const ifExists = await conversationData.findOne(
-            { 
-                sender: userId,
-                reciever: recieverId._id,
+            {
+                reciever: userId,
                 status: false
             }
-        ); 
+        );
 
-        if(ifExists){
+        if (ifExists) {
 
             const chatExists = await messageData.findOne(
-                { 
+                {
                     refId: ifExists._id,
                 }
             );
 
-            if(!chatExists){
-                await userData.findByIdAndUpdate(
+            if (!chatExists) {
+
+                await conversationData.findByIdAndUpdate(
                     {
-                        _id: userId
+                        _id: ifExists._id,
                     },
                     {
-                        $push: {
-                            friends: ifExists._id
-                        }
+                        status: true
                     }
                 );
 
@@ -93,29 +165,16 @@ const acceptRequest = async (req, res) => {
                     createdAt: Date.now(),
                 })
                 const chatSchema = await chatData.save();
-                const chatSchemaId = chatSchema._id;
 
-                await conversationData.findByIdAndUpdate(
-                    {
-                        _id: ifExists._id
-                    },
-                    {
-                        status: true, 
-                        $push: {
-                            messages: chatSchemaId
-                        }
-                    }
-                );
-        
                 res.status(201).json({
                     success: true,
                     value: "friend request accepted",
+                    message: chatSchema
                 })
             }
-            else{
-                res.json("Already a friend");
-            }
-
+        }
+        else {
+            res.json("Already a friend");
         }
 
     }
@@ -124,32 +183,35 @@ const acceptRequest = async (req, res) => {
     }
 }
 
+
 const sendMessage = async (req, res) => {
     try {
-    
+
         const userId = req.user.id;
         const recieverId = await userData.findOne({ email: req.body.email });
 
         const ifExists = await conversationData.findOne(
-            {  
-                sender: userId,  
+            {
+                sender: userId,
                 reciever: recieverId._id,
                 status: true
             }
-        ); 
+        );
 
-        if(ifExists){
+        if (ifExists) {
             await messageData.findByIdAndUpdate(
                 {
-                    _id: ifExists.messages
+                    refId: ifExists._id
                 },
                 {
                     $push: {
-                        chats: 
+                        chats:
                         {
                             userId: userId,
+                            type: text,
                             value: req.body.message,
-                        } 
+                            timeStamp: Date.now()
+                        }
                     }
                 }
             );
@@ -158,7 +220,7 @@ const sendMessage = async (req, res) => {
                 value: "message send",
             })
         }
-        else{
+        else {
             res.json("First Send friend request");
         }
     }
@@ -169,22 +231,22 @@ const sendMessage = async (req, res) => {
 
 const fetchMessages = async (req, res) => {
     try {
-    
+
         const userId = req.user.id;
         const recieverId = await userData.findOne({ email: req.body.email });
 
         const ifExists = await conversationData.findOne(
-            { 
-                sender: userId,   
+            {
+                sender: userId,
                 reciever: recieverId._id,
                 status: true
             }
-        ); 
+        );
 
-        if(ifExists){
+        if (ifExists) {
             const fetchChats = await messageData.findOne(
                 {
-                    _id: ifExists.messages
+                    refId: ifExists._id
                 }
             );
             res.status(201).json({
@@ -192,7 +254,7 @@ const fetchMessages = async (req, res) => {
                 message: fetchChats,
             })
         }
-        else{
+        else {
             res.json("No chats Available");
         }
     }
@@ -202,4 +264,4 @@ const fetchMessages = async (req, res) => {
 }
 
 
-module.exports = { sendRequest, acceptRequest, sendMessage, fetchMessages }
+module.exports = { totalUsers, sendRequest, totalRequests, acceptRequest, sendMessage, fetchMessages }

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BiLogOut } from "react-icons/bi";
+import axios from "axios";
 
 const Sidebar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -10,36 +11,134 @@ const Sidebar = () => {
     hometown: "New York",
   });
 
-  const [conversations, setConversations] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      lastMessage: "Hey, are you free later?",
-      isOnline: true,
-      followed: false,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      lastMessage: "Let me know when you're free.",
-      isOnline: false,
-      followed: false,
-    },
-    {
-      id: 3,
-      name: "Alice Johnson",
-      lastMessage: "Sure, see you at 5!",
-      isOnline: true,
-      followed: false,
-    },
-    {
-      id: 4,
-      name: "Bob Brown",
-      lastMessage: "Let’s catch up next week.",
-      isOnline: false,
-      followed: false,
-    },
-  ]);
+  const [conversations, setConversations] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('http://localhost:4000/api/totalUsers');
+        setConversations(response.data.message);
+      }
+      catch (error) {
+        console.log(error);
+      }
+    }
+    fetchUsers();
+  }, [])
+
+  const [requests, setRequests] = useState([])
+
+  useEffect(() => {
+    const totalRequests = async () => {
+      try {
+
+        const response = await axios.get('http://localhost:4000/api/totalRequests',
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          });
+        console.log(response.data.message[0]);
+        setRequests(response.data.message[0]);
+      }
+      catch (error) {
+        console.log(error);
+      }
+    }
+    totalRequests();
+  }, [])
+
+  const sendRequest = async (email) => {
+
+    console.log(email);
+    try {
+      const response = await axios.post('http://localhost:4000/api/sendRequest',
+        {
+          email: email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        }
+      );
+      console.log(response.data);
+      if (response.data.value === "friend request send") {
+        alert("friend request send");
+      }
+      else if (response.data.value === "Friend Request Already Send") {
+        alert("Friend Request Already Send");
+      }
+      else {
+        console.log("some error");
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
+  };
+
+  const acceptRequest = async (email) => {
+
+    try {
+      const response = await axios.post('http://localhost:4000/api/acceptRequest',
+        {
+          email: email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        }
+      );
+      console.log(response.data);
+      if (response.data.value === "friend request accepted") {
+        alert("friend request accepted");
+      }
+      else if (response.data === "Already a friend") {
+        alert("Already a friend");
+      }
+      else {
+        console.log("some error");
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
+  };
+
+  const [text, setText] = useState([])
+
+  const sendMessage = async (email) => {
+
+    console.log(email);
+    try {
+      const response = await axios.post('http://localhost:4000/api/sendRequest',
+        {
+          email: email,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        }
+      );
+      console.log(response.data);
+      if (response.data.value === "friend request send") {
+        alert("friend request send");
+      }
+      else if (response.data.value === "Friend Request Already Send") {
+        alert("Friend Request Already Send");
+      }
+      else {
+        console.log("some error");
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
+  };
+
 
   const filteredConversations = conversations.filter((conv) =>
     conv.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -151,23 +250,20 @@ const Sidebar = () => {
                 >
                   <div
                     onClick={() => openProfileModal(conversation)}
-                    className={`w-10 h-10 rounded-full flex-shrink-0 cursor-pointer ${
-                      conversation.isOnline ? "bg-green-500" : "bg-gray-500"
-                    }`}
+                    className={`w-10 h-10 rounded-full flex-shrink-0 cursor-pointer ${conversation.isOnline ? "bg-green-500" : "bg-gray-500"
+                      }`}
                   />
                   <div className="flex-grow">
                     <p className="font-medium">{conversation.name}</p>
                     <p className="text-sm text-gray-400 truncate">
-                      {conversation.lastMessage}
+                      {conversation.email}
                     </p>
                   </div>
                   <button
-                    onClick={() => toggleFollow(conversation.id)}
-                    className={`px-4 py-2 rounded-md ${
-                      conversation.followed ? "bg-red-500" : "bg-green-500"
-                    } text-white hover:${
-                      conversation.followed ? "bg-red-600" : "bg-green-600"
-                    }`}
+                    onClick={() => sendRequest(conversation.email)}
+                    className={`px-4 py-2 rounded-md ${conversation.followed ? "bg-red-500" : "bg-green-500"
+                      } text-white hover:${conversation.followed ? "bg-red-600" : "bg-green-600"
+                      }`}
                   >
                     {conversation.followed ? "Unfollow" : "Follow"}
                   </button>
@@ -177,6 +273,19 @@ const Sidebar = () => {
               <p className="text-gray-400 text-center">No conversations found</p>
             )}
           </ul>
+        </div>
+
+        <div>
+          <p>Friend Requests</p>
+          {
+            requests == null ? "" : requests.map((value) => {
+              return <tr>
+                <td>{value.name}</td>
+                <td>{value.email}</td>
+                <td><button className="bg-slate-400" onClick={()=>acceptRequest(value.email)}>Click here</button></td>
+              </tr>
+            })
+          }
         </div>
 
         {/* Add New Chat Button */}

@@ -39,7 +39,8 @@ const MessagePage = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-gray-800 text-white ">
       {/* Sidebar */}
-      <Sidebar onConversationSelect={handleSelectConversation} />
+      {/*<Sidebar onConversationSelect={handleSelectConversation} />*/}
+      <Sidebar />
 
       {/* Main Chat Area */}
       <div className="flex-grow flex flex-col">

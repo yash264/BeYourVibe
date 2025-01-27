@@ -22,10 +22,6 @@ const userSchema = new mongoose.Schema({
     homeTown: {
         type: String
     },
-    friends: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "conversationData"
-    }],
     password: {
         type: String
     },

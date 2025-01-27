@@ -11,9 +11,6 @@ const conversationSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    messages: {
-        type: String,
-    },
 })
 
 const conversationData = new mongoose.model("conversation", conversationSchema);

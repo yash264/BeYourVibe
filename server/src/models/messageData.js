@@ -14,6 +14,9 @@ const messageSchema = new mongoose.Schema({
     userId:{
         type:String
     },
+    type:{
+        type:String
+    },
     value:{
         type:String
     },
