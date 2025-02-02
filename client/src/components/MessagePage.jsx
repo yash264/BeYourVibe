@@ -1,172 +1,87 @@
 import React, { useState } from "react";
-import Sidebar from "./Sidebar";
-import Avatar from "./Avatar";
+import { FiSend, FiImage } from "react-icons/fi";
+import { FaVideo, FaPhone } from "react-icons/fa";
 
 const MessagePage = () => {
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Hey! How's it going?", sender: "other" },
+    { id: 2, text: "All good! What about you?", sender: "me" },
+  ]);
   const [newMessage, setNewMessage] = useState("");
-  const [showUploadOptions, setShowUploadOptions] = useState(false);
-  const [selectedFileType, setSelectedFileType] = useState("");
 
-  // Handle selecting a conversation
-  const handleSelectConversation = (conversation) => {
-    setSelectedConversation(conversation);
-    setMessages([]); // Clear previous messages or fetch new ones for the selected user
-  };
-
-  // Handle sending a message
-  const handleSendMessage = (type = "text", content = "") => {
-    if (type === "text" && newMessage.trim()) {
-      setMessages((prev) => [
-        ...prev,
-        { text: newMessage, sender: "You", type: "text" },
-      ]);
-      setNewMessage("");
-    } else if (type !== "text" && content) {
-      setMessages((prev) => [...prev, { text: content, sender: "You", type }]);
-    }
-  };
-
-  // Handle file upload
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      handleSendMessage(selectedFileType, URL.createObjectURL(file));
-    }
+  const sendMessage = () => {
+    if (newMessage.trim() === "") return;
+    setMessages([...messages, { id: messages.length + 1, text: newMessage, sender: "me" }]);
+    setNewMessage("");
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-gray-800 text-white ">
-      {/* Sidebar */}
-      {/*<Sidebar onConversationSelect={handleSelectConversation} />*/}
-      <Sidebar />
-
-      {/* Main Chat Area */}
-      <div className="flex-grow flex flex-col">
-        {selectedConversation ? (
-          <>
-            {/* Chat Header */}
-            <div className="bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <Avatar
-                  imageUrl="https://via.placeholder.com/150" // Replace with actual profile picture
-                  firstName={selectedConversation.name.split(" ")[0]}
-                  lastName={selectedConversation.name.split(" ")[1]}
-                  isOnline={selectedConversation.isOnline}
-                />
-                <div>
-                  <h2 className="text-lg font-semibold">
-                    {selectedConversation.name}
-                  </h2>
-                  <p
-                    className={`text-sm ${
-                      selectedConversation.isOnline
-                        ? "text-green-500"
-                        : "text-gray-500"
-                    }`}
-                  >
-                    {selectedConversation.isOnline ? "Online" : "Offline"}
-                  </p>
-                </div>
-              </div>
+    <div className="flex h-screen w-full">
+      {/* Sidebar - Followed Users */}
+      <div className="w-full md:w-1/4 bg-gray-900 text-white p-4">
+        <h2 className="text-xl font-bold mb-4">Followed Users</h2>
+        <div className="space-y-3">
+          {['User 1', 'User 2', 'User 3'].map((user, index) => (
+            <div key={index} className="p-3 bg-gray-800 rounded-lg cursor-pointer flex items-center gap-2" onClick={() => alert(`Go to ${user} profile`)}>
+              <div className={`w-8 h-8 rounded-full ${user === 'User 2' ? 'bg-gray-500' : 'bg-green-500'}`}></div>
+              <span>{user} ({user === 'User 2' ? 'Offline' : 'Online'})</span>
             </div>
-
-            {/* Chat Messages */}
-            <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-900 scrollbar-hide">
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    msg.sender === "You" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {msg.type === "text" ? (
-                    <div
-                      className={`p-3 rounded-lg ${
-                        msg.sender === "You"
-                          ? "bg-green-500 text-white"
-                          : "bg-gray-700 text-gray-200"
-                      } max-w-xs sm:max-w-sm md:max-w-md`}
-                    >
-                      {msg.text}
-                    </div>
-                  ) : (
-                    <img
-                      src={msg.text}
-                      alt="Uploaded"
-                      className="w-32 h-32 sm:w-48 rounded-lg object-cover"
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Chat Input */}
-            <div className="bg-gray-800 p-4 border-t border-gray-700">
-              <div className="flex items-center space-x-3">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-grow px-3 py-2 rounded-md bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <div className="relative">
-                  {showUploadOptions && (
-                    <div className="absolute right-0 bg-gray-800 text-white rounded-md shadow-lg w-40">
-                      <button
-                        onClick={() => {
-                          setSelectedFileType("image");
-                          document.getElementById("fileUpload").click();
-                        }}
-                        className="w-full px-4 py-2 hover:bg-gray-700"
-                      >
-                        Upload Image
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedFileType("video");
-                          document.getElementById("fileUpload").click();
-                        }}
-                        className="w-full px-4 py-2 hover:bg-gray-700"
-                      >
-                        Upload Video
-                      </button>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setShowUploadOptions(!showUploadOptions)}
-                    className="px-4 py-2 bg-yellow-500 rounded-md hover:bg-yellow-600"
-                  >
-                    Upload
-                  </button>
-                </div>
-                <input
-                  type="file"
-                  id="fileUpload"
-                  accept="image/*,video/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-                <button
-                  onClick={() => handleSendMessage()}
-                  className="px-4 py-2 bg-green-500 rounded-md hover:bg-green-600"
-                >
-                  Send
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col justify-center items-center h-full text-gray-400">
-            <h2 className="text-xl font-semibold mb-2">Select user to send message</h2>
-            <p>Select a conversation from the sidebar to start chatting</p>
+          ))}
+        </div>
+      </div>
+      
+      {/* Chat Window */}
+      <div className="flex-1 flex flex-col bg-gray-100 w-full">
+        <div className="p-4 bg-white shadow-md text-lg font-semibold flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gray-400 rounded-full"></div>
+            <span className="cursor-pointer" onClick={() => alert('Go to User Profile')}>Chat with User (Online)</span>
           </div>
-        )}
+          <div className="flex gap-3">
+            <button className="p-2 text-gray-500 hover:text-blue-500">
+              <FaPhone size={20} />
+            </button>
+            <button className="p-2 text-gray-500 hover:text-blue-500">
+              <FaVideo size={20} />
+            </button>
+          </div>
+        </div>
+        
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`p-2 rounded-lg max-w-xs ${msg.sender === "me" ? "bg-blue-500 text-white self-end" : "bg-gray-300"}`}
+            >
+              {msg.text}
+            </div>
+          ))}
+        </div>
+        
+        {/* Message Input */}
+        <div className="p-4 bg-white flex items-center gap-2 border-t w-full">
+          <button className="p-2 text-gray-500 hover:text-blue-500">
+            <FiImage size={20} />
+          </button>
+          <button className="p-2 text-gray-500 hover:text-blue-500">
+            <FaVideo size={20} />
+          </button>
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 p-2 border rounded-lg"
+          />
+          <button onClick={sendMessage} className="p-2 text-blue-500 hover:text-blue-700">
+            <FiSend size={20} />
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
 export default MessagePage;
+

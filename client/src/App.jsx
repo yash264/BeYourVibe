@@ -12,6 +12,10 @@ import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
 import MessagePage from "./components/MessagePage";
+import Profile from "./components/Profile";
+import SearchUser from "./components/SearchUser";
+import Notifications from "./components/Notifications";
+import Create from "./components/Create";
 
 
 // // protect routes that require authentication
@@ -60,9 +64,19 @@ function App() {
 				<Route
 					path='/'
 					element={
-					  <MessagePage />
+					  <DashboardPage/>
 					}		
-				/>		
+				/>
+				         
+                <Route path="/profile" element={<Profile />} /> 
+				<Route path="/search" element={<SearchUser />} /> 
+				<Route path="notifications" element={<Notifications />} /> 
+				<Route path="create" element={<Create/>} /> 
+
+                
+				<Route path="/messages" element={<MessagePage />} />
+				
+         
 				<Route
 					path='/signup'
 					element={
