@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const userData = require("../models/userData");
 const conversationData = require("../models/conversationData");
 const messageData = require("../models/messageData");
@@ -7,7 +8,17 @@ const { text } = require("express");
 
 const totalUsers = async (req, res) => {
     try {
-        const fetchUsers = await userData.find({ });
+        const userId = req.user.id;
+        const ObjectId = mongoose.Types.ObjectId;
+        const fetchUsers = await userData.find(
+            {
+                _id:
+                {
+                    $ne: new ObjectId(userId)
+                }
+            }
+        );
+
 
         res.status(201).json({
             success: true,
@@ -20,169 +31,26 @@ const totalUsers = async (req, res) => {
     }
 }
 
-
-const sendRequest = async (req, res) => {
+const particularUser = async (req, res) => {
     try {
+        const email = req.body.email;
 
-        const userId = req.user.id;
         const ifExists = await userData.findOne(
             {
-                email: req.body.email,
+                email: email
             }
         );
 
-        const friendExists = await conversationData.findOne(
-            {
-                $or:
-                    [
-                        {
-                            sender: userId,
-                            reciever: ifExists._id,
-                        },
-                        {
-                            sender: ifExists._id,
-                            reciever: userId,
-                        }
-                    ]
-            },
-        );
-
-        if (friendExists) {
-            res.status(201).json({
-                success: true,
-                value: "Friend Request Already Send",
-                message: friendExists
-            })
-        }
-        else {
-            const friendRequest = new conversationData({
-                sender: userId,
-                reciever: ifExists._id,
-                status: false
-            })
-            const conversation = await friendRequest.save();
-
-            res.status(201).json({
-                success: true,
-                value: "friend request send",
-                message: conversation
-            })
-        }
+        res.status(201).json({
+            success: true,
+            data: "particular user",
+            message: ifExists,
+        });
     }
     catch (error) {
         console.log(error);
     }
 }
-
-const totalRequests = async (req, res) => {
-    try {
-        const userId = req.user.id;
-
-        const ifExists = await conversationData.find(
-            {
-                $or:
-                    [
-                        {
-                            sender: userId,
-                        },
-                        {
-                            reciever: userId,
-                        }
-                    ]
-            },
-        );
-
-        if(ifExists){
-            let requests = [];
-            for(let i=0;i<ifExists.length;i++){
-                let senderId ;
-
-                if( ifExists[i].reciever === userId ){
-                    senderId = ifExists[i].sender;
-                }
-                else if( ifExists[i].sender === userId ){
-                    senderId = ifExists[i].reciever;
-                }
-
-                const senderDetails = await userData.find(
-                    {
-                        _id: senderId
-                    }
-                );
-
-                if(senderDetails){
-                    requests.push(senderDetails);
-                }
-            }
-            res.status(201).json({
-                success: true,
-                data: "friend requests list",
-                message: requests,
-            });
-        }
-        else{
-            res.json("no friend requests");
-        }
-    }
-    catch (error) {
-        console.log(error);
-    }
-}
-
-const acceptRequest = async (req, res) => {
-    try {
-
-        const userId = req.user.id;
-
-        const ifExists = await conversationData.findOne(
-            {
-                reciever: userId,
-                status: false
-            }
-        );
-
-        if (ifExists) {
-
-            const chatExists = await messageData.findOne(
-                {
-                    refId: ifExists._id,
-                }
-            );
-
-            if (!chatExists) {
-
-                await conversationData.findByIdAndUpdate(
-                    {
-                        _id: ifExists._id,
-                    },
-                    {
-                        status: true
-                    }
-                );
-
-                const chatData = new messageData({
-                    refId: ifExists._id,
-                    createdAt: Date.now(),
-                })
-                const chatSchema = await chatData.save();
-
-                res.status(201).json({
-                    success: true,
-                    value: "friend request accepted",
-                    message: chatSchema
-                })
-            }
-        }
-        else {
-            res.json("Already a friend");
-        }
-
-    }
-    catch (error) {
-        console.log(error);
-    }
-}
-
 
 const sendMessage = async (req, res) => {
     try {
@@ -190,39 +58,21 @@ const sendMessage = async (req, res) => {
         const userId = req.user.id;
         const recieverId = await userData.findOne({ email: req.body.email });
 
-        const ifExists = await conversationData.findOne(
-            {
-                sender: userId,
-                reciever: recieverId._id,
-                status: true
-            }
-        );
 
-        if (ifExists) {
-            await messageData.findByIdAndUpdate(
-                {
-                    refId: ifExists._id
-                },
-                {
-                    $push: {
-                        chats:
-                        {
-                            userId: userId,
-                            type: text,
-                            value: req.body.message,
-                            timeStamp: Date.now()
-                        }
-                    }
-                }
-            );
-            res.status(201).json({
-                success: true,
-                value: "message send",
-            })
-        }
-        else {
-            res.json("First Send friend request");
-        }
+        const conversation = new messageData({
+            sender: userId,
+            reciever: recieverId._id,
+            type: req.body.text,
+            value: req.body.message,
+            read: false,
+            timeStamp: Date.now()
+        })
+        const messageDetails = await conversation.save();
+
+        res.status(201).json({
+            success: true,
+            value: "message send",
+        })
     }
     catch (error) {
         console.log(error);
@@ -235,23 +85,38 @@ const fetchMessages = async (req, res) => {
         const userId = req.user.id;
         const recieverId = await userData.findOne({ email: req.body.email });
 
-        const ifExists = await conversationData.findOne(
+        const ifExists = await messageData.find(
             {
-                sender: userId,
-                reciever: recieverId._id,
-                status: true
+                $or: [
+                    {
+                        sender: userId,
+                        reciever: recieverId._id,
+                    },
+                    {
+                        sender: recieverId._id,
+                        reciever: userId,
+                    }
+                ]
             }
         );
 
         if (ifExists) {
-            const fetchChats = await messageData.findOne(
-                {
-                    refId: ifExists._id
-                }
-            );
+
+            for(let i=0;i<ifExists.length;i++){
+                await messageData.updateMany(
+                    {
+                        _id: ifExists[i]._id,
+                        reciever: userId,
+                    },
+                    {
+                        read: true
+                    }
+                );
+            }
+
             res.status(201).json({
                 success: true,
-                message: fetchChats,
+                message: ifExists,
             })
         }
         else {
@@ -263,5 +128,44 @@ const fetchMessages = async (req, res) => {
     }
 }
 
+const notifications = async (req, res) => {
+    try {
 
-module.exports = { totalUsers, sendRequest, totalRequests, acceptRequest, sendMessage, fetchMessages }
+        const userId = req.user.id;
+        const ObjectId = mongoose.Types.ObjectId;
+
+        const ifExists = await messageData.find(
+            {
+                reciever: new ObjectId(userId),
+                read: false
+            }
+        );
+
+        if (ifExists) {
+
+            let messageList = [];
+            for(let i=0;i<ifExists.length;i++){
+                const userDetail = await userData.findOne(
+                    {
+                        _id: ifExists[i].sender,
+                    }
+                );
+                messageList.push(userDetail);
+            }
+
+            res.status(201).json({
+                success: true,
+                message: messageList,
+            })
+        }
+        else {
+            res.json("No notification");
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+
+module.exports = { totalUsers, particularUser, sendMessage, fetchMessages, notifications }

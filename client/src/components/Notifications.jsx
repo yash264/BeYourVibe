@@ -1,32 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from "axios";
 
-// Example Notifications Data
-const notificationsData = [
-  {
-    id: 1,
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    text: 'Liked your post',
-    timestamp: '2 hours ago',
-    type: 'like',
-  },
-  {
-    id: 2,
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    text: 'Commented on your post',
-    timestamp: '4 hours ago',
-    type: 'comment',
-  },
-  {
-    id: 3,
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    text: 'Started following you',
-    timestamp: '1 day ago',
-    type: 'follow',
-  },
-];
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState(notificationsData);
+  const [notifications, setNotifications] = useState([]);
+
+  // Example Notifications Data
+
+  useEffect(() => {
+    const notifications = async () => {
+
+      const token = localStorage.getItem('authToken');
+      try {
+        const response = await axios.get('http://localhost:4000/api/notifications',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+        console.log(response.data);
+        if (response.data.success === true) {
+          setNotifications(response.data.message);
+        }
+      }
+      catch (error) {
+        console.log(error);
+      }
+    };
+    notifications();
+  }, [])
 
   // Function to mark a notification as read
   const markAsRead = (id) => {
@@ -44,10 +47,9 @@ const Notifications = () => {
       <div className="space-y-6">
         {notifications.map((notification) => (
           <div
-            key={notification.id}
-            className={`flex items-center space-x-4 p-4 rounded-lg transition-transform transform ${
-              notification.read ? 'bg-gray-800' : 'bg-gray-700'
-            } hover:scale-105 hover:shadow-lg`}
+            key={notification._id}
+            className={`flex items-center space-x-4 p-4 rounded-lg transition-transform transform ${notification.name ? 'bg-gray-800' : 'bg-gray-700'
+              } hover:scale-105 hover:shadow-lg`}
           >
             {/* User Avatar */}
             <img
@@ -55,13 +57,13 @@ const Notifications = () => {
               alt="User Avatar"
               className="w-12 h-12 rounded-full"
             />
-            
+
             {/* Notification Content */}
             <div className="flex-1">
               <p className="text-sm">
-                <span className="font-semibold">{notification.text}</span>
+                <span className="font-semibold">{notification.name}</span>
               </p>
-              <p className="text-xs text-gray-400">{notification.timestamp}</p>
+              <p className="text-xs text-gray-400">{notification.email}</p>
             </div>
 
             {/* Mark as Read Button */}

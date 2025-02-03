@@ -1,5 +1,6 @@
 
 import Sidebar from '../components/Sidebar';
+import Profile from '../components/Profile';
 import React from 'react';
 
 const DashboardPage = () => {
@@ -9,7 +10,9 @@ const DashboardPage = () => {
       <div>
         <Sidebar/>
       </div>
-      
+      <div>
+        <Profile />
+      </div>
     </div>
   );
 }

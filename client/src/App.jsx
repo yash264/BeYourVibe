@@ -11,6 +11,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
+
 import MessagePage from "./components/MessagePage";
 import Profile from "./components/Profile";
 import SearchUser from "./components/SearchUser";
@@ -71,9 +72,7 @@ function App() {
                 <Route path="/profile" element={<Profile />} /> 
 				<Route path="/search" element={<SearchUser />} /> 
 				<Route path="notifications" element={<Notifications />} /> 
-				<Route path="create" element={<Create/>} /> 
-
-                
+				<Route path="/create" element={<Create/>} /> 
 				<Route path="/messages" element={<MessagePage />} />
 				
          

@@ -1,21 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Search } from "lucide-react";
-
-const users = [
-  { id: 1, name: "John Doe", username: "johndoe", avatar: "https://i.pravatar.cc/150?img=1" },
-  { id: 2, name: "Jane Smith", username: "janesmith", avatar: "https://i.pravatar.cc/150?img=2" },
-  { id: 3, name: "Alex Johnson", username: "alexjohnson", avatar: "https://i.pravatar.cc/150?img=3" },
-  { id: 4, name: "Emily Davis", username: "emilydavis", avatar: "https://i.pravatar.cc/150?img=4" },
-];
 
 const SearchUser = () => {
   const [search, setSearch] = useState("");
 
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const totalUsers = async () => {
+      const token = localStorage.getItem('authToken');
+      try {
+        const response = await axios.get('http://localhost:4000/api/totalUsers', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log(response.data.message);
+
+        if (response.data.success === true) {
+          setUsers(response.data.message);
+        }
+        else {
+          alert("Some Error Occured");
+        }
+      }
+      catch (error) {
+        console.log(error);
+      }
+    };
+    totalUsers();
+  }, []);
+
   const filteredUsers = users.filter(
-    (user) =>
+    (user) => 
       user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.username.toLowerCase().includes(search.toLowerCase())
+      user.email.toLowerCase().includes(search.toLowerCase())
   );
+
+  const navigate = useNavigate()
+
+  const redirect = (name, email) => {
+    navigate( "../messages",
+      {
+        state:
+        {
+          name: name,
+          email: email,
+        }
+      }
+    );
+  }
 
   return (
     <div className="flex flex-col items-center w-full h-screen bg-gray-900 text-white p-4">
@@ -34,22 +71,26 @@ const SearchUser = () => {
       {/* Search Results */}
       <div className="w-full max-w-md bg-gray-900 rounded-lg shadow-md overflow-hidden">
         {filteredUsers.length > 0 ? (
-          filteredUsers.map((user) => (
+          filteredUsers.map((value, index) => (
             <div
-              key={user.id}
+              key={index}
               className="flex items-center p-3 border-b border-gray-700 hover:bg-gray-800 transition duration-200"
             >
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-12 h-12 rounded-full border-2 border-gray-600"
-              />
+              {
+                value.personDetails.map((item, i) => (
+                  <img
+                    src={item.profilePic}
+                    key={i}
+                    alt={value.name}
+                    className="w-12 h-12 rounded-full border-2 border-gray-600"
+                  />
+                ))}
               <div className="ml-3">
-                <p className="text-lg font-semibold">{user.name}</p>
-                <p className="text-gray-400 text-sm">@{user.username}</p>
+                <p key={index} className="text-lg font-semibold">{value.name}</p>
+                <p key={index} className="text-gray-400 text-sm">{value.email}</p>
               </div>
-              <button className="ml-auto px-4 py-1 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition duration-200">
-                Follow
+              <button className="ml-auto px-4 py-1 text-white bg-blue-500 rounded-full hover:bg-blue-600 transition duration-200" onClick={() => redirect(value.name, value.email)} >
+                Message
               </button>
             </div>
           ))

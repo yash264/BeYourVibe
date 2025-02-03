@@ -5,13 +5,10 @@ const messageSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    refId:{
+    sender:{
         type:String
     },
-    chats:{
-        type:Array
-    },
-    userId:{
+    reciever:{
         type:String
     },
     type:{
@@ -20,8 +17,8 @@ const messageSchema = new mongoose.Schema({
     value:{
         type:String
     },
-    timestamp : {
-        type: Date,
+    read:{
+        type:Boolean
     },
 })
 

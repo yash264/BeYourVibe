@@ -157,7 +157,7 @@ const updateUser = async (req, res) => {
             {    
                 $set:
                 {
-                    personalDetails:
+                    personDetails:
                     { 
                         gender:req.body.gender,
                         about:req.body.about,
